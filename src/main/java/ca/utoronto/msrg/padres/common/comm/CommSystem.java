@@ -13,6 +13,9 @@ import ca.utoronto.msrg.padres.common.comm.zero.ZeroAddress;
 import ca.utoronto.msrg.padres.common.comm.zero.ZeroSocketServer;
 import org.apache.log4j.Logger;
 
+import ca.utoronto.msrg.padres.common.comm.netty.client.NioMessageSender;
+import ca.utoronto.msrg.padres.common.comm.netty.common.NioAddress;
+import ca.utoronto.msrg.padres.common.comm.netty.server.NioServer;
 import ca.utoronto.msrg.padres.common.comm.rmi.RMIAddress;
 import ca.utoronto.msrg.padres.common.comm.rmi.RMIMessageSender;
 import ca.utoronto.msrg.padres.common.comm.rmi.RMIServer;
@@ -44,7 +47,7 @@ public class CommSystem {
 	 * 
 	 */
 	public enum CommSystemType {
-		RMI, SOCKET, ZERO;
+		RMI, SOCKET, ZERO,NIO;
 
 		/**
 		 * Given a URI string, it returns the communication sytsem type.
@@ -63,7 +66,9 @@ public class CommSystem {
 				return SOCKET;
             else if (uri.toLowerCase().startsWith("zero"))
                 return ZERO;
-			else
+            else if (uri.toLowerCase().startsWith("nio"))
+            	return NIO;
+            else
 				throw new CommunicationException("Unrecognized communication protocol: " + uri);
 		}
 
@@ -88,13 +93,7 @@ public class CommSystem {
 	 */
 	protected CommServer defaultServer = null;
 
-	/**
-	 * All the connection accepting servers created by the communication layer. Identified (map key)
-	 * by their specific ID given at the time of creation. These servers can be of different
-	 * communication types (RMI, socket, etc.)
-	 */
-	protected Map<NodeAddress, CommServer> listenServers;
-	
+		
 	private boolean shutdown = false;
 
 	/**
@@ -105,7 +104,6 @@ public class CommSystem {
 	 */
 	public CommSystem() throws CommunicationException {
 		defaultServer = null;
-		listenServers = new HashMap<NodeAddress, CommServer>();
 		findLocalIPv4Addresses();
 	}
 
@@ -187,10 +185,7 @@ public class CommSystem {
 	 */
 	public void createListener(String serverURI) throws CommunicationException {
 		NodeAddress serverAddress = ConnectionHelper.getAddress(serverURI);
-		if (listenServers.containsKey(serverAddress)) {
-			throw new CommunicationException("A server with the URI " + serverAddress.toString()
-					+ " already exists");
-		}
+		
         CommServer server = null;
 		switch (serverAddress.getType()) {
 		case RMI:
@@ -202,6 +197,9 @@ public class CommSystem {
         case ZERO:
             server = createNewZeroServer((ZeroAddress) serverAddress);
             break;
+        case NIO:
+            server = createNioServer((NioAddress)serverAddress);
+            break;
 
 		default:
 			throw new CommunicationException("Communication system type not recognized");
@@ -209,7 +207,6 @@ public class CommSystem {
 		if (defaultServer == null) {
 			defaultServer = server;
 		}
-		listenServers.put(serverAddress, server);
 	}
 
 	/**
@@ -226,7 +223,7 @@ public class CommSystem {
 	public void addMessageListener(String serverURI, MessageListenerInterface msgListener)
 			throws CommunicationException {
 		NodeAddress serverAddress = ConnectionHelper.getAddress(serverURI);
-		listenServers.get(serverAddress).addMessageListener(msgListener);
+		defaultServer.addMessageListener(msgListener);
 	}
 
 	/**
@@ -237,9 +234,7 @@ public class CommSystem {
 	 *            The message listener to be added.
 	 */
 	public void addMessageListener(MessageListenerInterface msgListener) {
-		for (CommServer server : listenServers.values()) {
-			server.addMessageListener(msgListener);
-		}
+			defaultServer.addMessageListener(msgListener);
 	}
 
 	/**
@@ -256,7 +251,7 @@ public class CommSystem {
 	public void addConnectionListener(String serverURI, ConnectionListenerInterface connectListener)
 			throws CommunicationException {
 		NodeAddress serverAddress = ConnectionHelper.getAddress(serverURI);
-		listenServers.get(serverAddress).addConnectionListener(connectListener);
+		defaultServer.addConnectionListener(connectListener);
 	}
 
 	/**
@@ -267,9 +262,7 @@ public class CommSystem {
 	 *            The connection listener to be added.
 	 */
 	public void addConnectionListener(ConnectionListenerInterface connectListener) {
-		for (CommServer server : listenServers.values()) {
-			server.addConnectionListener(connectListener);
-		}
+			defaultServer.addConnectionListener(connectListener);
 	}
 
 	/**
@@ -286,13 +279,15 @@ public class CommSystem {
 	 *             MessageSender
 	 * @see CommSystemType
 	 */
-	public MessageSender getMessageSender(String remoteServerURI) throws CommunicationException {
+	public MessageSender getMessageSender(String remoteServerURI,HostType hostType) throws CommunicationException {
 		NodeAddress remoteServerAddress = ConnectionHelper.getAddress(remoteServerURI);
 		switch (remoteServerAddress.getType()) {
 		case RMI:
 			return createRMIMessageSender((RMIAddress) remoteServerAddress);
 		case SOCKET:
 			return createSocketMessageSender((SocketAddress) remoteServerAddress);
+		case NIO: 
+			return new NioMessageSender(this, ConnectionHelper.getAddress(remoteServerURI),hostType);
 		default:
 			throw new CommunicationException("Communication system type not recognized");
 		}
@@ -333,9 +328,7 @@ public class CommSystem {
 		else
 			shutdown = true;
 		
-		for (CommServer server : listenServers.values()) {
-			server.shutDown();
-		}
+			defaultServer.shutDown();
 	}
 
 	protected RMIServer createNewRMIServer(RMIAddress serverAddress)
@@ -351,6 +344,10 @@ public class CommSystem {
     protected ZeroSocketServer createNewZeroServer(ZeroAddress serverAddress) throws CommunicationException {
         return new ZeroSocketServer(serverAddress, this);
     }
+    
+    protected NioServer createNioServer(NioAddress serverAddress) throws CommunicationException{
+		return new NioServer(serverAddress, this);
+	}
 
 	protected RMIMessageSender createRMIMessageSender(
 			RMIAddress remoteServerAddress) throws CommunicationException {
@@ -361,4 +358,8 @@ public class CommSystem {
 			SocketAddress remoteServerAddress) {
         return new SocketMessageSender(remoteServerAddress);
     }
+	
+	public CommServer getServer(){
+		return defaultServer;
+	}
 }

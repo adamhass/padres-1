@@ -1,5 +1,6 @@
 package ca.utoronto.msrg.padres.common.comm;
 
+import ca.utoronto.msrg.padres.common.comm.netty.common.NioAddress;
 import ca.utoronto.msrg.padres.common.comm.rmi.RMIAddress;
 import ca.utoronto.msrg.padres.common.comm.socket.SocketAddress;
 import ca.utoronto.msrg.padres.common.comm.zero.ZeroAddress;
@@ -51,6 +52,8 @@ public class ConnectionHelper {
 			return new SocketAddress(nodeURI);
         case ZERO:
             return new ZeroAddress(nodeURI);
+        case NIO:
+            return new NioAddress(nodeURI);
 		default:
 			throw new CommunicationException("Communication system type not recognized");
 		}

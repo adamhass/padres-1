@@ -15,7 +15,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import ca.utoronto.msrg.padres.common.comm.*;
 import org.apache.log4j.Logger;
 
-import ca.utoronto.msrg.padres.common.comm.CommSystem.HostType;
+import ca.utoronto.msrg.padres.common.comm.HostType;
 import ca.utoronto.msrg.padres.common.message.Advertisement;
 import ca.utoronto.msrg.padres.common.message.AdvertisementMessage;
 import ca.utoronto.msrg.padres.common.message.CompositeSubscription;
@@ -575,7 +575,7 @@ public class Client {
 			} else {
 				if (brokerStates.size() == 0)
 					setDefaultBrokerAddress(brokerAddr);
-				MessageSender msgSender = commSystem.getMessageSender(brokerURI);
+				MessageSender msgSender = commSystem.getMessageSender(brokerURI,HostType.CLIENT);
 				BrokerState bState = addBrokerState(brokerAddr, msgSender);
 				
 				msgSender.connect(

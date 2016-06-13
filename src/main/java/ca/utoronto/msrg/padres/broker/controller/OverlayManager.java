@@ -26,6 +26,7 @@ import ca.utoronto.msrg.padres.broker.brokercore.BrokerCore;
 import ca.utoronto.msrg.padres.broker.brokercore.BrokerCoreException;
 import ca.utoronto.msrg.padres.common.comm.CommunicationException;
 import ca.utoronto.msrg.padres.common.comm.ConnectionListenerInterface;
+import ca.utoronto.msrg.padres.common.comm.HostType;
 import ca.utoronto.msrg.padres.common.comm.MessageSender;
 import ca.utoronto.msrg.padres.common.comm.OutputQueue;
 import ca.utoronto.msrg.padres.common.message.Advertisement;
@@ -234,7 +235,7 @@ public class OverlayManager implements Manager, ConnectionListenerInterface {
 
 	protected MessageSender createMessageSenderAndConnect(String toBrokerURI) throws CommunicationException {
 		MessageSender msgSender =
-			brokerCore.getCommSystem().getMessageSender(toBrokerURI);
+			brokerCore.getCommSystem().getMessageSender(toBrokerURI,HostType.SERVER);
 		msgSender.connect();
 		return msgSender;
 	}
