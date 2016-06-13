@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Properties;
 
 import ca.utoronto.msrg.padres.broker.controller.db.DBConnector;
-import ca.utoronto.msrg.padres.broker.management.web.ManagementServer;
 import ca.utoronto.msrg.padres.broker.monitor.BrokerInfoPublisher;
 import ca.utoronto.msrg.padres.broker.monitor.SystemMonitor;
 import ca.utoronto.msrg.padres.broker.monitor.SystemMonitor.AdvSubInfoType;
@@ -122,8 +121,6 @@ public class BrokerConfig {
 
 	protected int webPort = 9090;
 
-	protected String webDirectory = ManagementServer.WEB_DIR;
-
 	protected boolean managementInterface = false;
 
 	protected String managementPropertyFileName = DEFAULT_MI_PROPS_FILE_PATH;
@@ -190,7 +187,6 @@ public class BrokerConfig {
 		this.cliInterface = origConfig.cliInterface;
 		this.webInterface = origConfig.webInterface;
 		this.webPort = origConfig.webPort;
-		this.webDirectory = origConfig.webDirectory;
 		this.managementInterface = origConfig.managementInterface;
 		this.managementPropertyFileName = origConfig.managementPropertyFileName;
 		this.logDir = origConfig.logDir;
@@ -260,15 +256,6 @@ public class BrokerConfig {
 		cliInterface = properties.getProperty("padres.consoleinterface").equals("ON") ? true
 				: false;
 
-		webInterface = properties.getProperty(ManagementServer.PROP_WEB_MANAGEMENT).equals("ON")
-				? true : false;
-
-		webPort = Integer.parseInt(properties.getProperty(ManagementServer.PROP_WEB_PORT,
-				ManagementServer.DEFAULT_WEB_PORT));
-
-		webDirectory = properties.getProperty(ManagementServer.PROP_WEB_DIR);
-		if (webDirectory == null)
-			webDirectory = ManagementServer.WEB_DIR;
 
 		managementInterface = properties.getProperty("padres.managementinterface").equals("ON")
 				? true : false;
@@ -444,10 +431,6 @@ public class BrokerConfig {
 		return webPort;
 	}
 
-	public String getWebDirectory() {
-		return webDirectory;
-	}
-
 	public boolean isManagementInterface() {
 		return managementInterface;
 	}
@@ -520,10 +503,6 @@ public class BrokerConfig {
 		this.webInterface = webInterface;
 	}
 
-	public void setWebDirectory(String webDirectory) {
-		this.webDirectory = webDirectory;
-	}
-
 	public void setManagementInterface(boolean managementInterface) {
 		this.managementInterface = managementInterface;
 	}
@@ -560,7 +539,6 @@ public class BrokerConfig {
 		outString += "\nCLI Interface: " + cliInterface;
 		outString += "\nWeb Interface: " + webInterface;
 		outString += "\nWeb Port: " + webPort;
-		outString += "\nWeb Dir: " + webDirectory;
 		outString += "\nMgnt. Interface: " + managementInterface;
 		outString += "\nMgnt. prop. file: " + managementPropertyFileName;
 		outString += "\nTotal Order: " + totalOrder;

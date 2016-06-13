@@ -29,12 +29,10 @@ import ca.utoronto.msrg.padres.broker.controller.LinkInfo;
 import ca.utoronto.msrg.padres.broker.controller.OverlayManager;
 import ca.utoronto.msrg.padres.broker.controller.OverlayRoutingTable;
 import ca.utoronto.msrg.padres.broker.management.console.ConsoleInterface;
-import ca.utoronto.msrg.padres.broker.management.web.ManagementServer;
 import ca.utoronto.msrg.padres.broker.monitor.SystemMonitor;
 import ca.utoronto.msrg.padres.broker.router.Router;
 import ca.utoronto.msrg.padres.broker.router.RouterFactory;
 import ca.utoronto.msrg.padres.broker.router.matching.MatcherException;
-import ca.utoronto.msrg.padres.broker.webmonitor.monitor.WebUIMonitorToBeRemoved;
 import ca.utoronto.msrg.padres.common.message.AdvertisementMessage;
 import ca.utoronto.msrg.padres.common.message.Message;
 import ca.utoronto.msrg.padres.common.message.MessageDestination;
@@ -69,8 +67,6 @@ public class BrokerCore {
 	protected InputQueueHandler inputQueue;
 
 	protected Router router;
-
-	protected WebUIMonitorToBeRemoved webuiMonitorToBeRemoved;
 
 	protected TimerThread timerThread;
 
@@ -214,9 +210,7 @@ public class BrokerCore {
 		initTimerThread();
 		initHeartBeatPublisher();
 		initHeartBeatSubscriber();
-		initWebInterface();
 		initNeighborConnections();
-		initManagementInterface();
 		initConsoleInterface();
 		running = true;
 		brokerCoreLogger.info("BrokerCore is started.");
@@ -431,12 +425,6 @@ public class BrokerCore {
 		return new HeartbeatSubscriber(this);
 	}
 
-	protected void initWebInterface() {
-		if (brokerConfig.isWebInterface()) {
-			ManagementServer managementServer = new ManagementServer(this);
-			managementServer.start();
-		}
-	}
 
 	protected void initNeighborConnections() {
 		// connect to initial remote brokers from configuration
@@ -460,15 +448,6 @@ public class BrokerCore {
 		}
 	}
 
-	protected void initManagementInterface() {
-		if (brokerConfig.isManagementInterface()) {			
-			// start the management interface web server
-			webuiMonitorToBeRemoved = new WebUIMonitorToBeRemoved(this);
-			webuiMonitorToBeRemoved.initialize();
-			brokerCoreLogger.info("ManagementInterface is started.");
-		}
-	}
-
 	protected void initConsoleInterface() {
 		if (brokerConfig.isCliInterface()) {
 			ConsoleInterface consoleInterface = new ConsoleInterface(this);
@@ -481,10 +460,6 @@ public class BrokerCore {
 	 */
 	public BrokerConfig getBrokerConfig() {
 		return brokerConfig;
-	}
-
-	public WebUIMonitorToBeRemoved getWebuiMonitorToBeRemoved() {
-		return webuiMonitorToBeRemoved;
 	}
 
 	/**
@@ -678,9 +653,6 @@ public class BrokerCore {
             heartbeatSubscriber.shutdown();
         }
 
-        if (webuiMonitorToBeRemoved != null) {
-            webuiMonitorToBeRemoved.shutdownBroker();
-        }
         if(timerThread != null) {
             timerThread.shutdown();
         }
